@@ -131,13 +131,13 @@ def on_message(client, userdata, msg):
                 )
                 print("Video stream pipeline started.")
             except Exception as e:
-                print(f"Error stmqtt_clientarting the pipeline: {e}")
+                print(f"Error starting the pipeline: {e}")
         else:
             print("Pipeline already running.")
 
     elif command == "off":
         if process_libcamera is not None and process_ffmpeg is not None:
-            print("Stopping the video streamqtt_clientm pipeline...")
+            print("Stopping the video stream pipeline...")
             try:
                 # Beende beide Prozesse
                 process_libcamera.terminate()
