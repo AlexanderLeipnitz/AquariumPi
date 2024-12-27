@@ -7,9 +7,11 @@ Monitor and control an aquarium with a Raspberry Pi via MQTT.
 
 ## Underwater webcam streaming
 - Using `Arducam 12MP IMX708 HDR 120°(H) Wide Angle Camera Module with M12 Lens` and `Entaniya Waterproof Case`
-- Provides an UDP video stream to `WEBCAM_RECEIVER_IP:WEBCAM_RECEIVER_PORT`
+- Provides an UDP video stream to `WEBCAM_RECEIVER_IP`:`WEBCAM_RECEIVER_PORT`
 
 ## Setup:
+- Activate 1-wire interface via `sudo raspi-config`
+- Add `dtoverlay=imx708` to `/boot/firmware/config.txt`
 - Set environment variables in `.env`
 - Check if `aquarium.service` has the correct path for `mqtt_aquarium.py` and environment file
 - Copy `aquarium.servive` to `/etc/systemd/system/`
