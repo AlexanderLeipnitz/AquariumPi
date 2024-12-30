@@ -21,22 +21,25 @@ MQTT_PASSWORD = get_environment_variable("MQTT_PASSWORD")
 MQTT_TOPIC_TEMPERATURE = get_environment_variable("MQTT_TOPIC_TEMPERATURE")
 MQTT_TOPIC_WEBCAM = get_environment_variable("MQTT_TOPIC_WEBCAM")
 
-RECEIVER_IP = get_environment_variable("WEBCAM_RECEIVER_IP")
-RECEIVER_PORT = int(get_environment_variable("WEBCAM_RECEIVER_PORT"))
 
 # Variables for ongoing recording and pipeline processes
 process_libcamera = None
 process_ffmpeg = None
+process_server = None
 
 
 # Callback for received MQTT messages
 def on_message(client, userdata, msg):
-    global process_libcamera, process_ffmpeg
+    global process_libcamera, process_ffmpeg, process_server
     command = msg.payload.decode("utf-8")
     print(f"Received command: {command}")
 
     if command == "on":
-        if process_libcamera is None and process_ffmpeg is None:
+        if (
+            process_libcamera is None
+            and process_ffmpeg is None
+            and process_server is None
+        ):
             print("Starting the video stream pipeline...")
             try:
                 process_libcamera = subprocess.Popen(
@@ -80,7 +83,7 @@ def on_message(client, userdata, msg):
                         "-f",
                         "fifo",
                         "-fifo_format",
-                        "mpegts",
+                        "rtsp",
                         "-map",
                         "0:v",
                         "-drop_pkts_on_overflow",
@@ -89,12 +92,18 @@ def on_message(client, userdata, msg):
                         "1",
                         "-recovery_wait_time",
                         "1",
-                        f"udp://{RECEIVER_IP}:{RECEIVER_PORT}",
+                        "-rtsp_transport",
+                        "typ",
+                        "rtsp://localhost:8554/mystream",
                         "-loglevel",
                         "error",
                         "-stats",
                     ],
                     stdin=process_libcamera.stdout,
+                )
+                cwd = os.path.dirname(os.path.realpath(__file__))
+                process_server = subprocess.Popen(
+                    ["/usr/bin/mediamtx", f"{cwd}/mediamtx.yml"]
                 )
                 print("Video stream pipeline started.")
             except Exception as e:
@@ -103,14 +112,20 @@ def on_message(client, userdata, msg):
             print("Pipeline already running.")
 
     elif command == "off":
-        if process_libcamera is not None and process_ffmpeg is not None:
+        if (
+            process_libcamera is not None
+            and process_ffmpeg is not None
+            and process_server is not None
+        ):
             print("Stopping the video stream pipeline...")
             try:
                 # Beende beide Prozesse
                 process_libcamera.terminate()
                 process_ffmpeg.terminate()
+                process_server.terminate()
                 process_libcamera = None
                 process_ffmpeg = None
+                process_server = None
                 print("Video stream pipeline stopped.")
             except Exception as e:
                 print(f"Error stopping the pipeline: {e}")
@@ -151,8 +166,13 @@ try:
 
 except Exception as e:
     print(f"Quiting MQTT client. Reason: {e}")
-    if process_libcamera is not None and process_ffmpeg is not None:
+    if (
+        process_libcamera is not None
+        and process_ffmpeg is not None
+        and process_server is not None
+    ):
         process_libcamera.terminate()
         process_ffmpeg.terminate()
+        process_server.terminate()
     client.loop_stop()
     client.disconnect()
