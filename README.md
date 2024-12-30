@@ -7,7 +7,7 @@ Monitor and control an aquarium with a Raspberry Pi via MQTT.
 
 ## Underwater webcam streaming
 - Using `Arducam 12MP IMX708 HDR 120°(H) Wide Angle Camera Module with M12 Lens` and `Entaniya Waterproof Case`
-- Provides an UDP video stream to `WEBCAM_RECEIVER_IP`:`WEBCAM_RECEIVER_PORT`
+- Provides a video stream via [mediamtx server](https://github.com/bluenviron/mediamtx)
 
 ## Setup:
 - Activate 1-wire interface via `sudo raspi-config`
